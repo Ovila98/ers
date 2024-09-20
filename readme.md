@@ -1,4 +1,4 @@
-# ers - Enhanced Error Handling for Go
+# ers - Simple Error Handling for Go
 
 `ers` is a custom error-handling package for Go that makes it easier to trace the origin of errors. It allows you to create errors, trace them through the call stack, and wrap existing errors with additional context, while automatically appending the source file and line number to the error messages.
 
