@@ -9,7 +9,7 @@
 - **Unwrap support**: Full support for Go's error unwrapping conventions
 - **Stack trace collection**: Automatic collection of file and line information at each wrapping point
 
-## Installation
+## Installation v1.0.0
 
 To install the package, use the following command:
 
