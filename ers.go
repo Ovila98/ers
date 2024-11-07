@@ -1,6 +1,6 @@
-// Package ers provides a custom error handling mechanism that includes stack tracing
-// and error wrapping with context. It simplifies error tracking by appending the
-// caller's file and line number to error messages.
+// Package ers provides a custom error handling mechanism that implements the error
+// interface using Error and StackLine structs. It offers automatic stack trace
+// collection and error wrapping with context details.
 package ers
 
 import (
@@ -9,63 +9,75 @@ import (
 )
 
 // getCaller retrieves the file and line number of the calling function at a given
-// stack depth, represented by the 'skip' parameter. This is used to append the
-// source location to the error messages.
+// stack depth, represented by the 'skip' parameter. The information is stored in
+// a StackLine struct for consistent tracking.
 //
 // Parameters:
 // - skip: The number of stack frames to skip when retrieving the caller.
 //
-// Returns a string containing the file and line number, or a default message if
-// unable to retrieve them.
-func getCaller(skip int) string {
+// Returns a StackLine struct containing the file path and line number, or default
+// values if retrieval fails.
+func getCaller(skip int) StackLine {
 	_, file, line, ok := runtime.Caller(skip)
 	if !ok {
-		return "(unable to get line number)"
+		return StackLine{
+			File: "unknown",
+			Line: 0,
+		}
 	}
-	return fmt.Sprintf("(%s:%d)", file, line)
+	return StackLine{
+		File: file,
+		Line: line,
+	}
 }
 
-// New creates a new error with a message and appends the source file and line number
-// of the code that called this function. It's useful for error creation with automatic
-// tracking of where the error was generated.
+// New creates a new Error struct with the provided message and automatically captures
+// the current stack location. The returned error implements both the error interface
+// and supports unwrapping.
 //
 // Parameters:
 // - message: The error message to be included.
 //
-// Returns a new error with the provided message and the caller's file/line information.
+// Returns an Error struct containing the message and current stack location.
 func New(message string) error {
-	return fmt.Errorf("%s\n-> %s", message, getCaller(2))
-}
-
-// Trace wraps an existing error by appending the file and line number of the
-// location where Trace was called. This is useful for adding context to an existing
-// error without altering its message.
-//
-// Parameters:
-// - err: The error to be traced.
-//
-// Returns a new error that wraps the provided error with additional context.
-// If 'err' is nil, Trace returns nil.
-func Trace(err error) error {
-	if err == nil {
-		return nil
+	stack := getCaller(2)
+	return &Error{
+		error: fmt.Errorf("%s", message),
+		stackTrace: []StackLine{
+			stack,
+		},
+		additionalInfo: []string{},
 	}
-	return fmt.Errorf("%w\n-> %s", err, getCaller(2))
 }
 
-// Wrap wraps an existing error with a new message and appends the file and line
-// number of the location where Wrap was called. This adds both new context
-// (via the message) and stack trace information.
+// Wrap enhances an existing error with additional context details and the current
+// stack location. If the input error is already an Error struct, it extends its
+// stack trace and adds the new details. Otherwise, it creates a new Error struct
+// wrapping the original error.
 //
 // Parameters:
 // - err: The existing error to wrap.
-// - message: Additional context to describe the error.
+// - details: Variable number of strings providing additional context.
 //
-// Returns a new error that includes both the wrapped error and the new message.
-// If 'err' is nil, Wrap returns nil.
-func Wrap(err error, message string) error {
+// Returns an Error struct that can be unwrapped to access the original error.
+// Returns nil if the input error is nil.
+func Wrap(err error, details ...string) error {
 	if err == nil {
 		return nil
 	}
-	return fmt.Errorf("+[%s]\n%w\n-> %s", message, err, getCaller(2))
+	stack := getCaller(2)
+	switch err := err.(type) {
+	case *Error:
+		err.stackTrace = append(err.stackTrace, stack)
+		err.AddInfo(details...)
+		return err
+	default:
+		return &Error{
+			error: err,
+			stackTrace: []StackLine{
+				stack,
+			},
+			additionalInfo: details,
+		}
+	}
 }
