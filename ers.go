@@ -5,48 +5,24 @@ package ers
 
 import (
 	"fmt"
-	"runtime"
 )
 
-// getCaller retrieves the file and line number of the calling function at a given
-// stack depth, represented by the 'skip' parameter. The information is stored in
-// a StackLine struct for consistent tracking.
-//
-// Parameters:
-// - skip: The number of stack frames to skip when retrieving the caller.
-//
-// Returns a StackLine struct containing the file path and line number, or default
-// values if retrieval fails.
-func getCaller(skip int) StackLine {
-	_, file, line, ok := runtime.Caller(skip)
-	if !ok {
-		return StackLine{
-			File: "unknown",
-			Line: 0,
-		}
-	}
-	return StackLine{
-		File: file,
-		Line: line,
-	}
-}
-
 // New creates a new Error struct with the provided message and automatically captures
-// the current stack location. The returned error implements both the error interface
-// and supports unwrapping.
+// the current stack location. It supports fmt-style formatting through formatTags.
 //
 // Parameters:
-// - message: The error message to be included.
+// - fmessage: The error message format string
+// - formatTags: Optional formatting arguments for the message
 //
-// Returns an Error struct containing the message and current stack location.
-func New(message string) error {
+// Returns an Error struct containing the formatted message and current stack location.
+func New(fmessage string, formatTags ...any) error {
 	stack := getCaller(2)
 	return &Error{
-		error: fmt.Errorf("%s", message),
+		error: fmt.Errorf(fmessage, formatTags...),
 		stackTrace: []StackLine{
 			stack,
 		},
-		additionalInfo: []string{},
+		contexts: []string{},
 	}
 }
 
@@ -56,8 +32,8 @@ func New(message string) error {
 // wrapping the original error.
 //
 // Parameters:
-// - err: The existing error to wrap.
-// - details: Variable number of strings providing additional context.
+// - err: The existing error to wrap
+// - details: Variable number of strings providing additional context
 //
 // Returns an Error struct that can be unwrapped to access the original error.
 // Returns nil if the input error is nil.
@@ -69,7 +45,7 @@ func Wrap(err error, details ...string) error {
 	switch err := err.(type) {
 	case *Error:
 		err.stackTrace = append(err.stackTrace, stack)
-		err.AddInfo(details...)
+		err.AddContext(details...)
 		return err
 	default:
 		return &Error{
@@ -77,7 +53,40 @@ func Wrap(err error, details ...string) error {
 			stackTrace: []StackLine{
 				stack,
 			},
-			additionalInfo: details,
+			contexts: details,
+		}
+	}
+}
+
+// Wrapf wraps an error with a formatted message. It behaves like Wrap but accepts
+// fmt-style formatting for the context message.
+//
+// Parameters:
+// - err: The existing error to wrap
+// - fmessage: Format string for the context message
+// - formatTags: Optional formatting arguments
+//
+// Returns an Error struct with the formatted context message.
+// Returns nil if the input error is nil.
+func Wrapf(err error, fmessage string, formatTags ...any) error {
+	if err == nil {
+		return nil
+	}
+	stack := getCaller(2)
+	switch err := err.(type) {
+	case *Error:
+		err.stackTrace = append(err.stackTrace, stack)
+		err.AddContext(fmt.Sprintf(fmessage, formatTags...))
+		return err
+	default:
+		return &Error{
+			error: err,
+			stackTrace: []StackLine{
+				stack,
+			},
+			contexts: []string{
+				fmt.Sprintf(fmessage, formatTags...),
+			},
 		}
 	}
 }
