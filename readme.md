@@ -1,3 +1,7 @@
+[![Go Reference](https://pkg.go.dev/badge/github.com/ovila98/ers.svg)](https://pkg.go.dev/github.com/ovila98/ers)
+[![Email](https://img.shields.io/badge/contact-ovila.acolatse.dev@gmail.com-blue)](mailto:ovila.acolatse.dev@gmail.com)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Ovila_Acolatse-blue?style=flat&logo=linkedin)](https://www.linkedin.com/in/ovila-acolatse/)
+
 # ers - Simple Error Handling for Go
 
 `ers` is a custom error-handling package for Go that makes it easier to trace the origin of errors. It implements the error interface with custom Error and StackLine structs, providing automatic stack trace collection and error wrapping with context details.
@@ -9,8 +13,9 @@
 - **Unwrap support**: Full support for Go's error unwrapping conventions
 - **Stack trace collection**: Automatic collection of file and line information at each wrapping point
 - **Formatted messages**: Support for fmt-style formatting in error messages and context
+- **100% Test Coverage**: Comprehensive test suite covering all functionality and edge cases
 
-## Installation v1.1.0
+## Installation v1.2.0
 
 To install the package, use the following command:
 
@@ -133,6 +138,7 @@ Failed to fetch data
 3. **Multiple Context Details**: Add multiple pieces of context when wrapping errors
 4. **Formatted Messages**: Support for fmt-style formatting in both errors and context
 5. **Clean Implementation**: Leverages Go's error interface effectively
+6. **100% Test Coverage**: Thoroughly tested with comprehensive test suite
 
 ## Contributions
 
