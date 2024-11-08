@@ -85,7 +85,7 @@ type Error struct {
 //
 // • stack trace •
 func (e *Error) Error() string {
-	stackTrace := fmt.Sprintf("• stack trace (most recent call last) •\n%s", e.StackTrace())
+	stackTrace := fmt.Sprintf("# stack trace (most recent call last) #\n%s", e.StackTrace())
 	if len(e.contexts) > 0 {
 		contexts := fmt.Sprintf("~ additional context (most recent last) ~\n%s", e.Context())
 		return fmt.Sprintf("%s\n\n%s\n%s", e.error.Error(), contexts, stackTrace)
@@ -118,8 +118,20 @@ func (e *Error) Stack() []StackLine {
 
 // AddContext appends one or more context messages to the error's additional information.
 // Messages are stored in order and displayed most recent last.
+// Empyty messages are ignored.
 func (e *Error) AddContext(contexts ...string) {
-	e.contexts = append(e.contexts, contexts...)
+	for _, line := range contexts {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			e.contexts = append(e.contexts, line)
+		}
+	}
+}
+
+// addToStack appends one or more StackLine entries to the error's stack trace.
+// Entries are stored in order and displayed most recent last.
+func (e *Error) addToStack(lines ...StackLine) {
+	e.stackTrace = append(e.stackTrace, lines...)
 }
 
 // Context formats all context messages into a readable string,

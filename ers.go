@@ -44,7 +44,7 @@ func Wrap(err error, details ...string) error {
 	stack := getCaller(2)
 	switch err := err.(type) {
 	case *Error:
-		err.stackTrace = append(err.stackTrace, stack)
+		err.addToStack(stack)
 		err.AddContext(details...)
 		return err
 	default:
@@ -75,7 +75,7 @@ func Wrapf(err error, fmessage string, formatTags ...any) error {
 	stack := getCaller(2)
 	switch err := err.(type) {
 	case *Error:
-		err.stackTrace = append(err.stackTrace, stack)
+		err.addToStack(stack)
 		err.AddContext(fmt.Sprintf(fmessage, formatTags...))
 		return err
 	default:
